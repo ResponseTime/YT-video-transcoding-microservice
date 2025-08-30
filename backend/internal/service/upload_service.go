@@ -9,9 +9,20 @@ import (
 	"os"
 	"strconv"
 
+	"github.com/hibiken/asynq"
 	"github.com/redis/go-redis/v9"
 	"github.com/responsetime/video-transcoding-microservice/internal/utils"
 )
+
+var queueMap = map[int]string{
+	0: "critical",
+	1: "critical",
+	2: "critical",
+	3: "default",
+	4: "default",
+	5: "low",
+	6: "low",
+}
 
 func UploadService(uploadId string, chunk multipart.File, part string, end string) {
 	redisInstance := utils.GetRedisInstance()
@@ -33,6 +44,21 @@ func UploadService(uploadId string, chunk multipart.File, part string, end strin
 	}
 	if end == "True" {
 		final_file := utils.Finalize(uploadId)
-		queueClient.Enqueue()
+		tasks := []*asynq.Task{
+			utils.NewVideoTranscode240pTask(final_file, uploadId),
+			utils.NewVideoTranscode360pTask(final_file, uploadId),
+			utils.NewVideoTranscode480pTask(final_file, uploadId),
+			utils.NewVideoTranscode720pTask(final_file, uploadId),
+			utils.NewVideoTranscode1080pTask(final_file, uploadId),
+			utils.NewVideoTranscode1440pTask(final_file, uploadId),
+			utils.NewVideoTranscode2160pTask(final_file, uploadId),
+		}
+
+		for priority, t := range tasks {
+			q, _ := queueMap[priority]
+			if _, err := queueClient.Enqueue(t, asynq.Queue(q)); err != nil {
+				log.Printf("failed to enqueue %v", err)
+			}
+		}
 	}
 }
