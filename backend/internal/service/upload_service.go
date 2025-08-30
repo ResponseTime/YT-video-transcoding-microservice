@@ -1,17 +1,28 @@
 package service
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"log"
 	"mime/multipart"
 	"os"
+	"strconv"
+
+	"github.com/redis/go-redis/v9"
+	"github.com/responsetime/video-transcoding-microservice/internal/utils"
 )
 
 func UploadService(uploadId string, chunk multipart.File, part string, end string) {
+	redisInstance := utils.GetRedisInstance()
+	ctx := context.Background()
 	var file *os.File
-	// partn, _ := strconv.Atoi(part)
-	file, err := os.OpenFile(fmt.Sprintf("./internal/temp/%s.mp4", uploadId), os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
+	partn, _ := strconv.Atoi(part)
+	file, err := os.Create(fmt.Sprintf("./internal/temp/%s-part-%d.mp4", uploadId, partn))
+	redisInstance.ZAdd(ctx, uploadId, redis.Z{
+		Score:  float64(partn),
+		Member: fmt.Sprintf("./internal/temp/%s-part-%d.mp4", uploadId, partn),
+	})
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -20,6 +31,6 @@ func UploadService(uploadId string, chunk multipart.File, part string, end strin
 		log.Fatal(err)
 	}
 	if end == "True" {
-		fmt.Println("✅ All chunks uploaded, ready to merge")
+		utils.Finalize(uploadId)
 	}
 }
