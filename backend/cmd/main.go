@@ -7,6 +7,8 @@ import (
 
 func main() {
 	utils.InitRedis()
+	worker, mux := utils.Queue()
 	router := router.GenRouter()
+	worker.Run(mux)
 	router.Run(":5000")
 }

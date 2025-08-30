@@ -15,6 +15,7 @@ import (
 
 func UploadService(uploadId string, chunk multipart.File, part string, end string) {
 	redisInstance := utils.GetRedisInstance()
+	queueClient := utils.QueueClient()
 	ctx := context.Background()
 	var file *os.File
 	partn, _ := strconv.Atoi(part)
@@ -31,6 +32,7 @@ func UploadService(uploadId string, chunk multipart.File, part string, end strin
 		log.Fatal(err)
 	}
 	if end == "True" {
-		utils.Finalize(uploadId)
+		final_file := utils.Finalize(uploadId)
+		queueClient.Enqueue()
 	}
 }
