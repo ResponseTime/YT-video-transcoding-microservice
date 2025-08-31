@@ -3,6 +3,10 @@ package utils
 import (
 	"context"
 	"encoding/json"
+	"fmt"
+	"os"
+	"os/exec"
+	"path"
 	"runtime"
 
 	"github.com/hibiken/asynq"
@@ -60,7 +64,24 @@ func HandleVideoTranscoding240p(c context.Context, t *asynq.Task) error {
 	if err := json.Unmarshal(t.Payload(), &p); err != nil {
 		return err
 	}
-	// TODO: actual transcoding logic for 240p
+
+	// 240p
+	output240p := path.Join(fmt.Sprintf("./internal/temp/%s-240p.mp4", p.UploadID))
+	cmd240p := exec.Command(
+		"ffmpeg",
+		"-i", p.Path,
+		"-vf", "scale=-2:240",
+		"-c:v", "libx264",
+		"-preset", "fast",
+		"-crf", "23",
+		"-c:a", "aac",
+		"-b:a", "128k",
+		"-y",
+		output240p,
+	)
+	cmd240p.Stdout = os.Stdout
+	cmd240p.Stderr = os.Stderr
+	cmd240p.Start()
 	return nil
 }
 
@@ -75,7 +96,22 @@ func HandleVideoTranscoding360p(c context.Context, t *asynq.Task) error {
 	if err := json.Unmarshal(t.Payload(), &p); err != nil {
 		return err
 	}
-	// TODO: actual transcoding logic for 360p
+	output360p := path.Join(fmt.Sprintf("./internal/temp/%s-360p.mp4", p.UploadID))
+	cmd360p := exec.Command(
+		"ffmpeg",
+		"-i", p.Path,
+		"-vf", "scale=-2:360",
+		"-c:v", "libx264",
+		"-preset", "fast",
+		"-crf", "23",
+		"-c:a", "aac",
+		"-b:a", "128k",
+		"-y",
+		output360p,
+	)
+	cmd360p.Stdout = os.Stdout
+	cmd360p.Stderr = os.Stderr
+	cmd360p.Start()
 	return nil
 }
 
@@ -90,7 +126,22 @@ func HandleVideoTranscoding480p(c context.Context, t *asynq.Task) error {
 	if err := json.Unmarshal(t.Payload(), &p); err != nil {
 		return err
 	}
-	// TODO: actual transcoding logic for 480p
+	output480p := path.Join(fmt.Sprintf("./internal/temp/%s-480p.mp4", p.UploadID))
+	cmd480p := exec.Command(
+		"ffmpeg",
+		"-i", p.Path,
+		"-vf", "scale=-2:480",
+		"-c:v", "libx264",
+		"-preset", "fast",
+		"-crf", "23",
+		"-c:a", "aac",
+		"-b:a", "128k",
+		"-y",
+		output480p,
+	)
+	cmd480p.Stdout = os.Stdout
+	cmd480p.Stderr = os.Stderr
+	cmd480p.Start()
 	return nil
 }
 
@@ -105,7 +156,22 @@ func HandleVideoTranscoding720p(c context.Context, t *asynq.Task) error {
 	if err := json.Unmarshal(t.Payload(), &p); err != nil {
 		return err
 	}
-	// TODO: actual transcoding logic for 720p
+	output720p := path.Join(fmt.Sprintf("./internal/temp/%s-720p.mp4", p.UploadID))
+	cmd720p := exec.Command(
+		"ffmpeg",
+		"-i", p.Path,
+		"-vf", "scale=-2:720",
+		"-c:v", "libx264",
+		"-preset", "fast",
+		"-crf", "23",
+		"-c:a", "aac",
+		"-b:a", "128k",
+		"-y",
+		output720p,
+	)
+	cmd720p.Stdout = os.Stdout
+	cmd720p.Stderr = os.Stderr
+	cmd720p.Start()
 	return nil
 }
 
@@ -120,7 +186,22 @@ func HandleVideoTranscoding1080p(c context.Context, t *asynq.Task) error {
 	if err := json.Unmarshal(t.Payload(), &p); err != nil {
 		return err
 	}
-	// TODO: actual transcoding logic for 1080p
+	output1080p := path.Join(fmt.Sprintf("./internal/temp/%s-1080p.mp4", p.UploadID))
+	cmd1080p := exec.Command(
+		"ffmpeg",
+		"-i", p.Path,
+		"-vf", "scale=-2:1080",
+		"-c:v", "libx264",
+		"-preset", "fast",
+		"-crf", "23",
+		"-c:a", "aac",
+		"-b:a", "128k",
+		"-y",
+		output1080p,
+	)
+	cmd1080p.Stdout = os.Stdout
+	cmd1080p.Stderr = os.Stderr
+	cmd1080p.Start()
 	return nil
 }
 
@@ -135,7 +216,22 @@ func HandleVideoTranscoding1440p(c context.Context, t *asynq.Task) error {
 	if err := json.Unmarshal(t.Payload(), &p); err != nil {
 		return err
 	}
-	// TODO: actual transcoding logic for 1440p
+	output1440p := path.Join(fmt.Sprintf("./internal/temp/%s-1440p.mp4", p.UploadID))
+	cmd1440p := exec.Command(
+		"ffmpeg",
+		"-i", p.Path,
+		"-vf", "scale=-2:1440",
+		"-c:v", "libx264",
+		"-preset", "fast",
+		"-crf", "23",
+		"-c:a", "aac",
+		"-b:a", "128k",
+		"-y",
+		output1440p,
+	)
+	cmd1440p.Stdout = os.Stdout
+	cmd1440p.Stderr = os.Stderr
+	cmd1440p.Start()
 	return nil
 }
 
@@ -150,6 +246,21 @@ func HandleVideoTranscoding2160p(c context.Context, t *asynq.Task) error {
 	if err := json.Unmarshal(t.Payload(), &p); err != nil {
 		return err
 	}
-	// TODO: actual transcoding logic for 2160p (4K)
+	output4k := path.Join(fmt.Sprintf("./internal/temp/%s-2160p.mp4", p.UploadID))
+	cmd4k := exec.Command(
+		"ffmpeg",
+		"-i", p.Path,
+		"-vf", "scale=-2:2160",
+		"-c:v", "libx264",
+		"-preset", "fast",
+		"-crf", "23",
+		"-c:a", "aac",
+		"-b:a", "128k",
+		"-y",
+		output4k,
+	)
+	cmd4k.Stdout = os.Stdout
+	cmd4k.Stderr = os.Stderr
+	cmd4k.Start()
 	return nil
 }
