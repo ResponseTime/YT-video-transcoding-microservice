@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log"
 	"os"
 	"os/exec"
 	"path"
@@ -20,9 +21,21 @@ const (
 	TypeVideoTranscode1080p = "transcode:1080p"
 	TypeVideoTranscode1440p = "transcode:1440p"
 	TypeVideoTranscode2160p = "transcode:2160p"
+	TypeFnT                 = "FnT"
 )
 
+var queueMap = map[int]string{
+	0: "critical",
+	1: "critical",
+	2: "critical",
+	3: "default",
+	4: "default",
+	5: "low",
+	6: "low",
+}
+
 var redisConn = asynq.RedisClientOpt{Addr: "localhost:6379"}
+var db = DBConn()
 
 type payload struct {
 	UploadID string `json:"upload_id"`
@@ -46,11 +59,45 @@ func Queue() (*asynq.Server, *asynq.ServeMux) {
 	mux.HandleFunc(TypeVideoTranscode1080p, HandleVideoTranscoding1080p)
 	mux.HandleFunc(TypeVideoTranscode1440p, HandleVideoTranscoding1440p)
 	mux.HandleFunc(TypeVideoTranscode2160p, HandleVideoTranscoding2160p)
+	mux.HandleFunc(TypeFnT, HandleFnTTask)
 	return worker, mux
 }
 
 func QueueClient() *asynq.Client {
 	return asynq.NewClient(redisConn)
+}
+
+// Finalize file upload & create video transcoding jobs
+
+func NewFnTTask(uploadId string) *asynq.Task {
+	payload, _ := json.Marshal(map[string]interface{}{"upload_id": uploadId})
+	return asynq.NewTask(TypeFnT, payload)
+}
+
+func HandleFnTTask(c context.Context, t *asynq.Task) error {
+	var p payload
+	if err := json.Unmarshal(t.Payload(), &p); err != nil {
+		return err
+	}
+
+	final_file := Finalize(p.UploadID)
+	tasks := []*asynq.Task{
+		NewVideoTranscode240pTask(final_file, p.UploadID),
+		NewVideoTranscode360pTask(final_file, p.UploadID),
+		NewVideoTranscode480pTask(final_file, p.UploadID),
+		NewVideoTranscode720pTask(final_file, p.UploadID),
+		NewVideoTranscode1080pTask(final_file, p.UploadID),
+		NewVideoTranscode1440pTask(final_file, p.UploadID),
+		NewVideoTranscode2160pTask(final_file, p.UploadID),
+	}
+
+	for priority, t := range tasks {
+		q, _ := queueMap[priority]
+		if _, err := QueueClient().Enqueue(t, asynq.Queue(q)); err != nil {
+			log.Printf("failed to enqueue %v", err)
+		}
+	}
+	return nil
 }
 
 // -------------------- 240p --------------------
@@ -81,7 +128,10 @@ func HandleVideoTranscoding240p(c context.Context, t *asynq.Task) error {
 	)
 	cmd240p.Stdout = os.Stdout
 	cmd240p.Stderr = os.Stderr
-	cmd240p.Start()
+	cmd240p.Run()
+	cmd240p.Wait()
+	// db.Exec()
+	// db.Acquire()
 	return nil
 }
 

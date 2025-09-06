@@ -13,7 +13,8 @@ func GenRouter() *gin.Engine {
 		c.Writer.Write([]byte("Healthy"))
 	})
 	router.POST("/upload-video", controller.UploadController())
-	router.GET("/poll-video-metadata", controller.PollController())
-	router.GET("/video/:id/:resolution", controller.GetVideoController())
+	router.GET("/poll-video-metadata/:uploadId", controller.PollController())
+	router.GET("/get-videos", controller.GetVideoController())
+	router.GET("/video/:uploadId/:resolution", controller.GetVideoController())
 	return router
 }
